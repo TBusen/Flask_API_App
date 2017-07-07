@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 stores = [ # need to store stores in list of dicts
@@ -18,9 +18,13 @@ stores = [ # need to store stores in list of dicts
 # GET - used to send data back only
 
 # Endpoints
+#template for js testing
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
 # POST /store data:  {name:}
-
-
 # by default @app.route is for GET requests, need to specify POST
 @app.route('/store', methods=['POST'])
 def create_store():

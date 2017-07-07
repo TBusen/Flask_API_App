@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 stores = [ # need to store stores in list of dicts
-    {'name': 'My wonderful store',
+    {'name': 'My Wonderful Store',
            'items': [
                {
                'name': 'My Item',
@@ -45,7 +45,7 @@ def get_store(name):  # method parameter must match value of string key
     # if none match, return an error message
     for store in stores:
         if store['name'] == name:
-            return jsonify({store})
+            return jsonify(store)
         else:
             return jsonify({'error':'no store found'})
 

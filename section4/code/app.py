@@ -13,12 +13,14 @@ items = []
 class Item(Resource): # student class inherets from the Resource class
     # essentially Student is a copy of Resource but we can change things
     def get(self, name):
-        for item in items:
-            if item['name'] == name:
-                return item
-        return {'item':None}, 404
+        item = next(list(filter(lambda x: x['name'] == name, items)),None) # cleaned up for loop returns first returned value
+        return {'item':item}, 200 if item else 400
 
     def post(self, name):
+        if next(list(filter(lambda x: x['name'] == name, items)),None): # if name matches and it's not None
+            # we don't want to create a value since it has to be unique return 400 for bad request
+            return {'message': "An item with name '{}' already exists".format(name)}, 400
+
         request_data = request.get_json()
         item = {'name':name, 'price': request_data['price']}
         items.append(item)

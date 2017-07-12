@@ -11,7 +11,7 @@ userid_mapping = {u.id: u for u in users}
 
 # authenticate a user
 
-def authentiate(username, password):
+def authenticate(username, password):
     user = username_mapping.get(username, None)
     if user and safe_str_cmp(user.password,  password): # returns bool, safe way to compare strings
         return user

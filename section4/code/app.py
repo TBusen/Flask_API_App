@@ -1,10 +1,33 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
+from flask_jwt import JWT, jwt_required
+
+from security import authenticate, identity # our functions we wrote
+
 # resources are things our api can return, create, etc...
 
 app = Flask(__name__)
-
+app.secret_key = 'travis'
 api = Api(app) # allows us to add resources to app/api
+
+jwt = JWT(app, authenticate, identity) #json web token for authentication
+# jwt object uses app with other functions together to allow users
+
+# how it works #
+
+#JWT creates a new endpoint /auth, when we call this we send it a username and password
+# JWT takes the username and password and passes it to the authenticate function
+# find the correct user object.  compare its password to what we received.  if correct we return the user.
+
+# this becomes the identity
+
+# the /auth endpoint returns the jwt token.  it doesn't do anything on it's own but we can send it to the next request
+
+# when the next call happens it sends it to the identity function to get the userid and then gets the correct user_id
+
+# if this works then the user is authenticated
+
+
 
 # the api works with resources and every resource has to be a class
 
@@ -12,12 +35,13 @@ items = []
 
 class Item(Resource): # student class inherets from the Resource class
     # essentially Student is a copy of Resource but we can change things
+    @jwt_required() # we have to authentiate before the get request
     def get(self, name):
-        item = next(list(filter(lambda x: x['name'] == name, items)),None) # cleaned up for loop returns first returned value
+        item = next(filter(lambda x: x['name'] == name, items),None) # cleaned up for loop returns first returned value
         return {'item':item}, 200 if item else 400
 
     def post(self, name):
-        if next(list(filter(lambda x: x['name'] == name, items)),None): # if name matches and it's not None
+        if next(filter(lambda x: x['name'] == name, items),None): # if name matches and it's not None
             # we don't want to create a value since it has to be unique return 400 for bad request
             return {'message': "An item with name '{}' already exists".format(name)}, 400
 
@@ -25,6 +49,11 @@ class Item(Resource): # student class inherets from the Resource class
         item = {'name':name, 'price': request_data['price']}
         items.append(item)
         return item, 201
+
+    def delete(self, name):
+        global items
+        items = list(filter(lambda x: x['name'] != name, items))
+        return {'message': 'Item deleted'} 
 
 class Itemlist(Resource):
     def get(self):

@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from flask_jwt import JWT, jwt_required
 
 from security import authenticate, identity # our functions we wrote
@@ -33,7 +33,14 @@ jwt = JWT(app, authenticate, identity) #json web token for authentication
 
 items = []
 
-class Item(Resource): # student class inherets from the Resource class
+class Item(Resource):
+    parser = reqparse.RequestParser() # this puts restrictions / criteria on what we are updating
+    parser.add_argument('price', # this checks the payload for what we want parsed and updated
+                        type=float,
+                        required=True,
+                        help="This field cannot be left blank!")
+
+    # student class inherets from the Resource class
     # essentially Student is a copy of Resource but we can change things
     @jwt_required() # we have to authentiate before the get request
     def get(self, name):
@@ -45,7 +52,7 @@ class Item(Resource): # student class inherets from the Resource class
             # we don't want to create a value since it has to be unique return 400 for bad request
             return {'message': "An item with name '{}' already exists".format(name)}, 400
 
-        request_data = request.get_json()
+        request_data = Item.parser.parse_args()
         item = {'name':name, 'price': request_data['price']}
         items.append(item)
         return item, 201
@@ -53,7 +60,18 @@ class Item(Resource): # student class inherets from the Resource class
     def delete(self, name):
         global items
         items = list(filter(lambda x: x['name'] != name, items))
-        return {'message': 'Item deleted'} 
+        return {'message': 'Item deleted'}
+
+    def put(self, name):
+        #data = request.get_json() # no longer use with payload
+        data = Item.parser.parse_args()
+        item = next(filter(lambda x: x['name'] == name, items), None)
+        if item is None:
+            item = {'name': name, 'price': data['price']}
+            items.append(item)
+        else:
+            item.update(data)
+        return item
 
 class Itemlist(Resource):
     def get(self):
